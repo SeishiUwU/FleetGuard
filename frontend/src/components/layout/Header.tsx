@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Moon, Sun, Bell, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -25,6 +26,7 @@ interface HeaderProps {
 
 export function Header({ className }: HeaderProps) {
   const [isDarkMode, setIsDarkMode] = useState(false);
+  const navigate = useNavigate();
   const { 
     notifications, 
     unreadCount, 
@@ -36,7 +38,6 @@ export function Header({ className }: HeaderProps) {
 
   const toggleDarkMode = () => {
     setIsDarkMode(!isDarkMode);
-    // Add dark mode logic here
     if (isDarkMode) {
       document.documentElement.classList.remove('dark');
     } else {
@@ -231,9 +232,15 @@ export function Header({ className }: HeaderProps) {
                   onCheckedChange={toggleDarkMode}
                 />
               </DropdownMenuItem>
-              <DropdownMenuItem>Profile Settings</DropdownMenuItem>
-              <DropdownMenuItem>Help & Support</DropdownMenuItem>
-              <DropdownMenuItem className="text-red-600">Sign Out</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => navigate('/contact-support')} className="cursor-pointer">
+                Help & Support
+              </DropdownMenuItem>
+              <DropdownMenuItem 
+                className="text-red-600 cursor-pointer" 
+                onClick={() => navigate('/login')}
+              >       
+                 Sign Out
+                  </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>

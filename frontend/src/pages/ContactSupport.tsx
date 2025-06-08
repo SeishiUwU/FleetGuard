@@ -4,455 +4,473 @@ import { Header } from '@/components/layout/Header';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { 
+  HeadphonesIcon, 
   Mail, 
   Phone, 
-  MapPin, 
+  MessageCircle, 
   Clock, 
-  Send, 
-  MessageSquare, 
-  Bug, 
-  HelpCircle,
-  Settings,
-  AlertTriangle,
   CheckCircle,
+  AlertCircle,
+  HelpCircle,
+  FileText,
+  Video,
+  Shield,
   Loader2
 } from 'lucide-react';
-import { toast } from 'sonner';
 
-const ContactSupport = () => {
+export default function ContactSupport() {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
     company: '',
-    subject: '',
-    category: '',
     priority: 'medium',
+    category: 'general',
+    subject: '',
     message: ''
   });
-  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleInputChange = (field: string, value: string) => {
+  const [isSubmitted, setIsSubmitted] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
+
+  const validateForm = () => {
+    const newErrors: Record<string, string> = {};
+
+    if (!formData.name.trim()) {
+      newErrors.name = 'Full name is required';
+    }
+
+    if (!formData.email.trim()) {
+      newErrors.email = 'Email is required';
+    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
+      newErrors.email = 'Please enter a valid email address';
+    }
+
+    if (!formData.subject.trim()) {
+      newErrors.subject = 'Subject is required';
+    }
+
+    if (!formData.message.trim()) {
+      newErrors.message = 'Message is required';
+    } else if (formData.message.trim().length < 10) {
+      newErrors.message = 'Message must be at least 10 characters long';
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    
+    if (!validateForm()) {
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      // Simulate API call - replace with your actual endpoint
+      console.log('Support ticket submitted:', formData);
+      
+      // Simulate network delay
+      await new Promise(resolve => setTimeout(resolve, 2000));
+
+      // Here you would typically make an API call:
+      // const response = await fetch('/api/support-tickets', {
+      //   method: 'POST',
+      //   headers: {
+      //     'Content-Type': 'application/json',
+      //   },
+      //   body: JSON.stringify(formData),
+      // });
+      // 
+      // if (!response.ok) {
+      //   throw new Error('Failed to submit ticket');
+      // }
+
+      setIsSubmitted(true);
+      
+      // Reset form after success message is shown
+      setTimeout(() => {
+        setIsSubmitted(false);
+        setFormData({
+          name: '',
+          email: '',
+          company: '',
+          priority: 'medium',
+          category: 'general',
+          subject: '',
+          message: ''
+        });
+        setErrors({});
+      }, 5000);
+
+    } catch (error) {
+      console.error('Error submitting support ticket:', error);
+      alert('Failed to submit ticket. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
-      [field]: value
+      [name]: value
     }));
-  };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    // Validation
-    if (!formData.name || !formData.email || !formData.subject || !formData.message) {
-      toast.error('Please fill in all required fields');
-      return;
-    }
-
-    setIsSubmitting(true);
-
-    try {
-      // Create email content
-      const emailSubject = `[Fleet Safety Support] ${formData.subject}`;
-      const emailBody = `
-New support request from Fleet Safety System:
-
-Name: ${formData.name}
-Email: ${formData.email}
-Company: ${formData.company || 'Not specified'}
-Category: ${formData.category || 'General'}
-Priority: ${formData.priority.charAt(0).toUpperCase() + formData.priority.slice(1)}
-
-Subject: ${formData.subject}
-
-Message:
-${formData.message}
-
----
-This message was sent from the Fleet Safety Support system.
-Please reply directly to the sender's email: ${formData.email}
-      `.trim();
-
-      // Method 1: Using mailto (opens user's email client)
-      const mailtoLink = `mailto:mouatez.splinter@gmail.com?subject=${encodeURIComponent(emailSubject)}&body=${encodeURIComponent(emailBody)}`;
-      
-      // Try to open the mailto link
-      const link = document.createElement('a');
-      link.href = mailtoLink;
-      link.click();
-
-      // Simulate sending delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
-
-      // Clear form
-      setFormData({
-        name: '',
-        email: '',
-        company: '',
-        subject: '',
-        category: '',
-        priority: 'medium',
-        message: ''
-      });
-
-      toast.success('Support request submitted successfully! Your email client should open to send the message.');
-      
-    } catch (error) {
-      console.error('Error submitting support request:', error);
-      toast.error('Failed to submit support request. Please try again.');
-    } finally {
-      setIsSubmitting(false);
+    // Clear error when user starts typing
+    if (errors[name]) {
+      setErrors(prev => ({
+        ...prev,
+        [name]: ''
+      }));
     }
   };
 
-  // Alternative method using EmailJS (if you want to send emails directly)
-  const handleSubmitWithEmailJS = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!formData.name || !formData.email || !formData.subject || !formData.message) {
-      toast.error('Please fill in all required fields');
-      return;
+  const supportOptions = [
+    {
+      icon: <Mail className="h-6 w-6" />,
+      title: "Email Support",
+      description: "Get help via email within 24 hours",
+      contact: "support@fleetguard.com",
+      availability: "24/7"
+    },
+    {
+      icon: <Phone className="h-6 w-6" />,
+      title: "Phone Support",
+      description: "Speak directly with our support team",
+      contact: "+1 (555) 123-4567",
+      availability: "Mon-Fri 9AM-6PM EST"
+    },
+    {
+      icon: <MessageCircle className="h-6 w-6" />,
+      title: "Live Chat",
+      description: "Real-time chat support",
+      contact: "Available in dashboard",
+      availability: "Mon-Fri 9AM-6PM EST"
     }
-
-    setIsSubmitting(true);
-
-    try {
-      // You would need to install and configure EmailJS
-      // npm install @emailjs/browser
-      
-      const templateParams = {
-        from_name: formData.name,
-        from_email: formData.email,
-        company: formData.company,
-        subject: formData.subject,
-        category: formData.category,
-        priority: formData.priority,
-        message: formData.message,
-        to_email: 'mouatez.splinter@gmail.com'
-      };
-
-      // Example EmailJS integration (you'd need to configure this)
-      /*
-      await emailjs.send(
-        'YOUR_SERVICE_ID',
-        'YOUR_TEMPLATE_ID',
-        templateParams,
-        'YOUR_PUBLIC_KEY'
-      );
-      */
-
-      // For now, fall back to mailto
-      const emailSubject = `[Fleet Safety Support] ${formData.subject}`;
-      const emailBody = `
-New support request:
-
-Name: ${formData.name}
-Email: ${formData.email}
-Company: ${formData.company || 'Not specified'}
-Category: ${formData.category || 'General'}
-Priority: ${formData.priority}
-
-Message:
-${formData.message}
-      `.trim();
-
-      const mailtoLink = `mailto:mouatez.splinter@gmail.com?subject=${encodeURIComponent(emailSubject)}&body=${encodeURIComponent(emailBody)}`;
-      window.open(mailtoLink);
-
-      setFormData({
-        name: '',
-        email: '',
-        company: '',
-        subject: '',
-        category: '',
-        priority: 'medium',
-        message: ''
-      });
-
-      toast.success('Support request submitted! Please send the email from your email client.');
-      
-    } catch (error) {
-      toast.error('Failed to submit request. Please try again.');
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const categories = [
-    { value: 'technical', label: 'Technical Issue', icon: Settings },
-    { value: 'bug', label: 'Bug Report', icon: Bug },
-    { value: 'feature', label: 'Feature Request', icon: HelpCircle },
-    { value: 'account', label: 'Account Support', icon: MessageSquare },
-    { value: 'general', label: 'General Inquiry', icon: Mail }
   ];
 
-  const priorities = [
-    { value: 'low', label: 'Low', color: 'bg-green-100 text-green-800' },
-    { value: 'medium', label: 'Medium', color: 'bg-yellow-100 text-yellow-800' },
-    { value: 'high', label: 'High', color: 'bg-red-100 text-red-800' },
-    { value: 'urgent', label: 'Urgent', color: 'bg-purple-100 text-purple-800' }
+  const faqItems = [
+    {
+      question: "How do I upload videos to the system?",
+      answer: "Navigate to the Video Clips section and click the upload button. You can drag and drop files or browse to select them.",
+      category: "video"
+    },
+    {
+      question: "What video formats are supported?",
+      answer: "We support MP4, MOV, AVI, and WebM formats. Maximum file size is 500MB per video.",
+      category: "video"
+    },
+    {
+      question: "How are safety incidents detected?",
+      answer: "Our AI analyzes video footage in real-time to detect behaviors like phone usage, texting, distracted driving, and more.",
+      category: "safety"
+    },
+    {
+      question: "Can I customize alert thresholds?",
+      answer: "Yes, you can adjust sensitivity levels and create custom rules in the Settings section.",
+      category: "alerts"
+    },
+    {
+      question: "How do I add new vehicles to my fleet?",
+      answer: "Go to Fleet Management and click 'Add Vehicle'. Fill in the vehicle details and assign drivers.",
+      category: "fleet"
+    }
   ];
 
   return (
-    <div className="flex h-screen bg-background">
+    <div className="flex h-screen bg-gray-50 dark:bg-gray-900">
       <Sidebar />
-      
       <div className="flex-1 flex flex-col overflow-hidden">
         <Header />
-        
-        <div className="flex-1 overflow-y-auto">
-          <div className="p-6 space-y-6">
-            {/* Header */}
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">Contact Support</h1>
-              <p className="text-gray-600 mt-1">
-                Get help with your Fleet Safety system or report issues
+        <main className="flex-1 overflow-x-hidden overflow-y-auto bg-gray-50 dark:bg-gray-900">
+          <div className="container mx-auto px-6 py-8">
+            {/* Hero Section */}
+            <div className="text-center mb-12">
+              <div className="flex justify-center mb-4">
+                <div className="bg-blue-100 dark:bg-blue-900 p-3 rounded-full">
+                  <HeadphonesIcon className="h-12 w-12 text-blue-600 dark:text-blue-400" />
+                </div>
+              </div>
+              <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-4">
+                Help & Support
+              </h1>
+              <p className="text-xl text-gray-600 dark:text-gray-300 max-w-3xl mx-auto">
+                Get the help you need to make the most of FleetGuard. Our support team is here to assist you 24/7.
               </p>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              {/* Contact Form */}
-              <div className="lg:col-span-2">
-                <Card>
+            {/* Support Options */}
+            <div className="grid md:grid-cols-3 gap-6 mb-12">
+              {supportOptions.map((option, index) => (
+                <Card key={index} className="hover:shadow-lg transition-shadow">
                   <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <MessageSquare className="h-5 w-5" />
-                      Send Support Message
-                    </CardTitle>
-                    <CardDescription>
-                      Fill out the form below and we'll get back to you as soon as possible
-                    </CardDescription>
+                    <div className="flex items-center gap-3">
+                      <div className="bg-blue-100 dark:bg-blue-900 p-2 rounded-lg">
+                        {option.icon}
+                      </div>
+                      <div>
+                        <CardTitle className="text-lg">{option.title}</CardTitle>
+                        <div className="flex items-center gap-1 mt-1">
+                          <Clock className="h-3 w-3 text-green-600" />
+                          <span className="text-xs text-green-600">{option.availability}</span>
+                        </div>
+                      </div>
+                    </div>
                   </CardHeader>
                   <CardContent>
+                    <p className="text-gray-600 dark:text-gray-300 text-sm mb-3">
+                      {option.description}
+                    </p>
+                    <div className="bg-gray-50 dark:bg-gray-800 p-3 rounded-lg">
+                      <p className="font-medium text-gray-900 dark:text-white">
+                        {option.contact}
+                      </p>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+
+            <div className="grid lg:grid-cols-2 gap-8">
+              {/* Support Form */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Submit a Support Ticket</CardTitle>
+                  <CardDescription>
+                    Fill out the form below and we'll get back to you as soon as possible
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {isSubmitted ? (
+                    <div className="text-center py-12">
+                      <CheckCircle className="h-20 w-20 text-green-600 mx-auto mb-6" />
+                      <h3 className="text-2xl font-semibold text-gray-900 dark:text-white mb-3">
+                        Ticket Submitted Successfully!
+                      </h3>
+                      <p className="text-gray-600 dark:text-gray-300 mb-4">
+                        Thank you for contacting us. We've received your support ticket and will get back to you within 24 hours.
+                      </p>
+                      <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg">
+                        <p className="text-sm text-blue-800 dark:text-blue-200">
+                          <strong>Ticket ID:</strong> #FL-{Date.now().toString().slice(-6)}
+                        </p>
+                      </div>
+                    </div>
+                  ) : (
                     <form onSubmit={handleSubmit} className="space-y-6">
-                      {/* Personal Information */}
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                          <Label htmlFor="name">
-                            Full Name <span className="text-red-500">*</span>
-                          </Label>
+                      <div className="grid md:grid-cols-2 gap-4">
+                        <div>
+                          <Label htmlFor="name">Full Name *</Label>
                           <Input
                             id="name"
-                            placeholder="Your full name"
+                            name="name"
                             value={formData.name}
-                            onChange={(e) => handleInputChange('name', e.target.value)}
-                            required
+                            onChange={handleChange}
+                            placeholder="John Doe"
+                            className={errors.name ? 'border-red-500' : ''}
                           />
+                          {errors.name && (
+                            <p className="text-red-500 text-sm mt-1">{errors.name}</p>
+                          )}
                         </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="email">
-                            Email Address <span className="text-red-500">*</span>
-                          </Label>
+                        <div>
+                          <Label htmlFor="email">Email Address *</Label>
                           <Input
                             id="email"
+                            name="email"
                             type="email"
-                            placeholder="your.email@company.com"
                             value={formData.email}
-                            onChange={(e) => handleInputChange('email', e.target.value)}
-                            required
+                            onChange={handleChange}
+                            placeholder="john@company.com"
+                            className={errors.email ? 'border-red-500' : ''}
                           />
+                          {errors.email && (
+                            <p className="text-red-500 text-sm mt-1">{errors.email}</p>
+                          )}
                         </div>
                       </div>
 
-                      <div className="space-y-2">
+                      <div>
                         <Label htmlFor="company">Company Name</Label>
                         <Input
                           id="company"
-                          placeholder="Your company name (optional)"
+                          name="company"
                           value={formData.company}
-                          onChange={(e) => handleInputChange('company', e.target.value)}
+                          onChange={handleChange}
+                          placeholder="Your Company Inc."
                         />
                       </div>
 
-                      {/* Issue Details */}
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                          <Label htmlFor="category">Category</Label>
-                          <Select value={formData.category} onValueChange={(value) => handleInputChange('category', value)}>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select category" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {categories.map((category) => (
-                                <SelectItem key={category.value} value={category.value}>
-                                  <div className="flex items-center gap-2">
-                                    <category.icon className="h-4 w-4" />
-                                    {category.label}
-                                  </div>
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-
-                        <div className="space-y-2">
+                      <div className="grid md:grid-cols-2 gap-4">
+                        <div>
                           <Label htmlFor="priority">Priority Level</Label>
-                          <Select value={formData.priority} onValueChange={(value) => handleInputChange('priority', value)}>
-                            <SelectTrigger>
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {priorities.map((priority) => (
-                                <SelectItem key={priority.value} value={priority.value}>
-                                  <Badge className={`text-xs ${priority.color}`}>
-                                    {priority.label}
-                                  </Badge>
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
+                          <select
+                            id="priority"
+                            name="priority"
+                            value={formData.priority}
+                            onChange={handleChange}
+                            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          >
+                            <option value="low">Low</option>
+                            <option value="medium">Medium</option>
+                            <option value="high">High</option>
+                            <option value="urgent">Urgent</option>
+                          </select>
+                        </div>
+                        <div>
+                          <Label htmlFor="category">Category</Label>
+                          <select
+                            id="category"
+                            name="category"
+                            value={formData.category}
+                            onChange={handleChange}
+                            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          >
+                            <option value="general">General Support</option>
+                            <option value="technical">Technical Issue</option>
+                            <option value="billing">Billing</option>
+                            <option value="feature">Feature Request</option>
+                            <option value="bug">Bug Report</option>
+                          </select>
                         </div>
                       </div>
 
-                      <div className="space-y-2">
-                        <Label htmlFor="subject">
-                          Subject <span className="text-red-500">*</span>
-                        </Label>
+                      <div>
+                        <Label htmlFor="subject">Subject *</Label>
                         <Input
                           id="subject"
-                          placeholder="Brief description of your issue"
+                          name="subject"
                           value={formData.subject}
-                          onChange={(e) => handleInputChange('subject', e.target.value)}
-                          required
+                          onChange={handleChange}
+                          placeholder="Brief description of your issue"
+                          className={errors.subject ? 'border-red-500' : ''}
                         />
+                        {errors.subject && (
+                          <p className="text-red-500 text-sm mt-1">{errors.subject}</p>
+                        )}
                       </div>
 
-                      <div className="space-y-2">
-                        <Label htmlFor="message">
-                          Message <span className="text-red-500">*</span>
-                        </Label>
+                      <div>
+                        <Label htmlFor="message">Message *</Label>
                         <Textarea
                           id="message"
-                          placeholder="Describe your issue in detail. Include any error messages, steps to reproduce, or screenshots if applicable."
-                          rows={6}
+                          name="message"
                           value={formData.message}
-                          onChange={(e) => handleInputChange('message', e.target.value)}
-                          required
+                          onChange={handleChange}
+                          rows={6}
+                          placeholder="Please provide detailed information about your issue or question..."
+                          className={errors.message ? 'border-red-500' : ''}
                         />
+                        {errors.message && (
+                          <p className="text-red-500 text-sm mt-1">{errors.message}</p>
+                        )}
                       </div>
 
-                      {/* Submit Button */}
-                      <div className="flex items-center justify-between pt-4">
-                        <p className="text-sm text-gray-500">
-                          <span className="text-red-500">*</span> Required fields
-                        </p>
-                        <Button 
-                          type="submit" 
-                          disabled={isSubmitting}
-                          className="flex items-center gap-2"
-                        >
-                          {isSubmitting ? (
-                            <>
-                              <Loader2 className="h-4 w-4 animate-spin" />
-                              Sending...
-                            </>
-                          ) : (
-                            <>
-                              <Send className="h-4 w-4" />
-                              Send Message
-                            </>
-                          )}
-                        </Button>
-                      </div>
+                      <Button 
+                        type="submit" 
+                        className="w-full"
+                        disabled={isLoading}
+                      >
+                        {isLoading ? (
+                          <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            Submitting Ticket...
+                          </>
+                        ) : (
+                          'Submit Support Ticket'
+                        )}
+                      </Button>
                     </form>
-                  </CardContent>
-                </Card>
-              </div>
+                  )}
+                </CardContent>
+              </Card>
 
-              {/* Contact Information & FAQ */}
-              <div className="space-y-6">
-                {/* Contact Information */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Contact Information</CardTitle>
-                    <CardDescription>
-                      Alternative ways to reach our support team
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="flex items-center gap-3">
-                      <Mail className="h-5 w-5 text-blue-600" />
-                      <div>
-                        <p className="font-medium">Email Support</p>
-                        <p className="text-sm text-gray-600">mouatez.splinter@gmail.com</p>
+              {/* FAQ Section */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Frequently Asked Questions</CardTitle>
+                  <CardDescription>
+                    Quick answers to common questions
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-6">
+                    {faqItems.map((item, index) => (
+                      <div key={index} className="border-b border-gray-200 dark:border-gray-700 pb-4 last:border-b-0">
+                        <div className="flex items-start gap-3">
+                          <div className="flex-shrink-0 mt-1">
+                            {item.category === 'video' && <Video className="h-4 w-4 text-blue-600" />}
+                            {item.category === 'safety' && <Shield className="h-4 w-4 text-green-600" />}
+                            {item.category === 'alerts' && <AlertCircle className="h-4 w-4 text-orange-600" />}
+                            {item.category === 'fleet' && <HelpCircle className="h-4 w-4 text-purple-600" />}
+                          </div>
+                          <div>
+                            <h4 className="font-medium text-gray-900 dark:text-white mb-2">
+                              {item.question}
+                            </h4>
+                            <p className="text-sm text-gray-600 dark:text-gray-300">
+                              {item.answer}
+                            </p>
+                          </div>
+                        </div>
                       </div>
+                    ))}
+                  </div>
+                  
+                  <div className="mt-8 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                    <div className="flex items-center gap-2 mb-2">
+                      <FileText className="h-5 w-5 text-blue-600" />
+                      <h4 className="font-medium text-blue-900 dark:text-blue-100">
+                        Need More Help?
+                      </h4>
                     </div>
-                    
-                    <div className="flex items-center gap-3">
-                      <Clock className="h-5 w-5 text-green-600" />
-                      <div>
-                        <p className="font-medium">Response Time</p>
-                        <p className="text-sm text-gray-600">Usually within 24 hours</p>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-3">
-                      <AlertTriangle className="h-5 w-5 text-orange-600" />
-                      <div>
-                        <p className="font-medium">Urgent Issues</p>
-                        <p className="text-sm text-gray-600">Mark priority as "Urgent"</p>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                {/* Quick Help */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Quick Help</CardTitle>
-                    <CardDescription>
-                      Common solutions to frequent issues
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-3">
-                    <div className="p-3 bg-blue-50 rounded-lg">
-                      <h4 className="font-medium text-blue-900 mb-1">Video Not Loading?</h4>
-                      <p className="text-sm text-blue-700">
-                        Check your internet connection and try refreshing the page.
-                      </p>
-                    </div>
-                    
-                    <div className="p-3 bg-green-50 rounded-lg">
-                      <h4 className="font-medium text-green-900 mb-1">Login Issues?</h4>
-                      <p className="text-sm text-green-700">
-                        Clear your browser cache and cookies, then try again.
-                      </p>
-                    </div>
-                    
-                    <div className="p-3 bg-purple-50 rounded-lg">
-                      <h4 className="font-medium text-purple-900 mb-1">Feature Request?</h4>
-                      <p className="text-sm text-purple-700">
-                        Use the "Feature Request" category when submitting your message.
-                      </p>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                {/* Status */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <CheckCircle className="h-5 w-5 text-green-600" />
-                      System Status
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm">All systems operational</span>
-                      <Badge className="bg-green-100 text-green-800">Online</Badge>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
+                    <p className="text-sm text-blue-800 dark:text-blue-200">
+                      Check out our comprehensive documentation and video tutorials for detailed guides on using FleetGuard.
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
             </div>
+
+            {/* Emergency Contact */}
+            <Card className="mt-8 border-red-200 dark:border-red-800">
+              <CardHeader>
+                <div className="flex items-center gap-2">
+                  <AlertCircle className="h-6 w-6 text-red-600" />
+                  <CardTitle className="text-red-700 dark:text-red-400">Emergency Support</CardTitle>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="bg-red-50 dark:bg-red-900/20 p-6 rounded-lg">
+                  <p className="text-red-800 dark:text-red-200 mb-2 font-semibold">
+                    Critical System Issues or Safety Emergencies
+                  </p>
+                  <p className="text-red-700 dark:text-red-300 text-sm mb-4">
+                    For urgent technical problems affecting fleet safety monitoring, call our emergency hotline immediately:
+                  </p>
+                  <div className="flex items-center gap-3 mb-3">
+                    <Phone className="h-5 w-5 text-red-600" />
+                    <span className="font-bold text-red-800 dark:text-red-200 text-lg">+1 (555) 911-HELP</span>
+                    <Badge variant="destructive">24/7 Emergency</Badge>
+                  </div>
+                  <p className="text-xs text-red-600 dark:text-red-400">
+                    This line is reserved for critical emergencies only. For general support, please use the contact form above.
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
           </div>
-        </div>
+        </main>
       </div>
     </div>
   );
-};
-
-export default ContactSupport;
+}
